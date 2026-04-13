@@ -1,0 +1,74 @@
+from typing import ClassVar
+from pathlib import Path
+from pydantic import BaseModel
+from jinja2 import Template, StrictUndefined
+
+from edu_agent.config import RoleType, TemplateType
+
+
+class BasePrompt(BaseModel):
+    __file_path__: ClassVar[str | Path]
+
+    def render_prompt(self) -> str:
+        text = Path(self.__file_path__).read_text(encoding="utf-8")
+        template = Template(text, undefined=StrictUndefined)
+        return template.render(self.model_dump()).strip()
+
+
+class BaseTemplatePrompt(BasePrompt):
+    role_instruction: str
+    context_instructions: list[str] | None = None
+
+
+class BaseRolePrompt(BasePrompt):
+    pass
+
+
+class BaseContextPrompt(BasePrompt):
+    solution: str | None = None
+
+
+class TutorFullAnswerPrompt(BaseTemplatePrompt):
+    __file_path__ = "prompts/templates/tutor_full_answer.jinja"
+
+
+class TutorQuickAnswerPrompt(BaseTemplatePrompt):
+    __file_path__ = "prompts/templates/tutor_quick_answer.jinja"
+
+
+class MathTutorPrompt(BaseRolePrompt):
+    __file_path__ = "prompts/roles/math_tutor.jinja"
+
+
+class HistoryTutorPrompt(BaseRolePrompt):
+    __file_path__ = "prompts/roles/history_tutor.jinja"
+
+
+class FormulaSolutionPrompt(BaseContextPrompt):
+    __file_path__ = "prompts/context/formula_solution.jinja"
+
+
+def render_system_instructions(role: RoleType, template: TemplateType, solution: str | None = None) -> str:
+    match role:
+        case "math_tutor":
+            role_instruction: str = MathTutorPrompt().render_prompt()
+        case "history_tutor":
+            role_instruction = HistoryTutorPrompt().render_prompt()
+        case _:
+            raise ValueError(f"Unknown role: {role}")
+    context_instructions: list[str] = []
+    if solution:
+        context_instructions.append(FormulaSolutionPrompt(solution=solution).render_prompt())
+    match template:
+        case "tutor_full_answer":
+            return TutorFullAnswerPrompt(
+                role_instruction=role_instruction,
+                context_instructions=context_instructions
+            ).render_prompt()
+        case "tutor_quick_answer":
+            return TutorQuickAnswerPrompt(
+                role_instruction=role_instruction,
+                context_instructions=context_instructions
+            ).render_prompt()
+        case _:
+            raise ValueError(f"Unknown template: {template}")

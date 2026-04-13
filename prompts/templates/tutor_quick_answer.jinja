@@ -1,0 +1,10 @@
+{{ role_instruction }}
+
+Требования к ответу:
+1. Всегда отвечай максимально кратко, одно предложение.
+
+{% if context_instructions -%}
+{% for instruction in context_instructions %}
+{{ instruction }}
+{% endfor %}
+{%- endif %}
