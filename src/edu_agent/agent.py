@@ -7,6 +7,7 @@ from langchain.messages import HumanMessage
 from edu_agent.config import Config, RoleType, TemplateType
 from edu_agent.chat_model import load_chat_model
 from edu_agent.prompts import render_system_instructions
+from edu_agent.tools.load_tools import load_tools
 
 # Загружаем ключ из .env-файла
 load_dotenv()
@@ -32,6 +33,7 @@ class EduAgent:
             model=chat_model,
             system_prompt=instructions,
             debug=debug,
+            tools=load_tools(role=role),
         )
 
     def invoke(self, prompt: str) -> str:

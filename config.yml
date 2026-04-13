@@ -6,7 +6,7 @@ llms:
     timeout: 60
     max_output_tokens: 512
   ollama:
-    model: "gemma3:1b"
+    model: "qwen2.5:0.5b"
     provider: "ollama"
     base_url: "http://localhost:11434/"
     timeout: 60

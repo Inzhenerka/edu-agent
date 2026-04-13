@@ -1,10 +1,14 @@
 from edu_agent.agent import EduAgent
 
-# Создаем агента
-agent = EduAgent(llm_key="api", role="math_tutor", template="tutor_quick_answer")
+agent = EduAgent(llm_key="api", role="math_tutor", template="tutor_quick_answer", debug=False)
 
-# Вызываем его, получая текстовый ответ
-response = agent.invoke(prompt="Посчитай 1+1/2-0,5-(3/2-3/6)")
+PROMPTS = [
+    "Посчитай 1+2*2",
+    "Один плюс два умножить на три корня из трех это сколько?",
+    "Это правильное выражение? sqrt(2)-1+x^2. Если да, то преобразуй"
+]
 
-# Выводим ответ
-print(response)
+for prompt in PROMPTS:
+    print(f"\n-> Запрос: {prompt}")
+    response = agent.invoke(prompt=prompt)
+    print(f"Ответ: {response}")

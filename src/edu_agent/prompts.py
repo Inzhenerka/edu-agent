@@ -25,7 +25,7 @@ class BaseRolePrompt(BasePrompt):
 
 
 class BaseContextPrompt(BasePrompt):
-    solution: str | None = None
+    pass
 
 
 class TutorFullAnswerPrompt(BaseTemplatePrompt):
@@ -48,17 +48,16 @@ class FormulaSolutionPrompt(BaseContextPrompt):
     __file_path__ = "prompts/context/formula_solution.jinja"
 
 
-def render_system_instructions(role: RoleType, template: TemplateType, solution: str | None = None) -> str:
+def render_system_instructions(role: RoleType, template: TemplateType) -> str:
     match role:
         case "math_tutor":
             role_instruction: str = MathTutorPrompt().render_prompt()
+            context_instructions: list[str] = [FormulaSolutionPrompt().render_prompt()]
         case "history_tutor":
             role_instruction = HistoryTutorPrompt().render_prompt()
+            context_instructions = []
         case _:
             raise ValueError(f"Unknown role: {role}")
-    context_instructions: list[str] = []
-    if solution:
-        context_instructions.append(FormulaSolutionPrompt(solution=solution).render_prompt())
     match template:
         case "tutor_full_answer":
             return TutorFullAnswerPrompt(
