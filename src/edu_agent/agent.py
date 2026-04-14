@@ -8,6 +8,7 @@ from edu_agent.config import Config, RoleType, TemplateType
 from edu_agent.chat_model import load_chat_model
 from edu_agent.prompts import render_system_instructions
 from edu_agent.tools.load_tools import load_tools
+from langchain.agents.middleware import ModelRetryMiddleware, ModelCallLimitMiddleware
 
 # Загружаем ключ из .env-файла
 load_dotenv()
@@ -34,9 +35,17 @@ class EduAgent:
             system_prompt=instructions,
             debug=debug,
             tools=load_tools(role=role),
+            middleware=[
+                ModelRetryMiddleware(max_retries=2, initial_delay=1),
+                ModelCallLimitMiddleware(run_limit=4, exit_behavior="end"),
+            ],
         )
 
     def invoke(self, prompt: str) -> str:
         """Вызываем агента и извлекаем ответ из массива сообщений"""
+        # Ограничиваем длину запроса для экономии токенов
+        prompt = prompt.strip()[:4000]
+        # Формируем и передаем агенту сообщение
         response = self._agent.invoke(input={"messages": HumanMessage(prompt)})
+        # Извлекаем ответ из последнего сообщения
         return response['messages'][-1].content
