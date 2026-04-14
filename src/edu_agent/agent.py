@@ -1,14 +1,15 @@
 from dotenv import load_dotenv
-from loguru import logger
 from langchain.agents import create_agent
 from langgraph.graph.state import CompiledStateGraph
 from langchain.messages import HumanMessage
 from langchain.agents.middleware import ModelRetryMiddleware, ModelCallLimitMiddleware
 
-from edu_agent.config import Config, RoleType, TemplateType
+from edu_agent.config import Config
 from edu_agent.chat_model import load_chat_model
-from edu_agent.prompts import render_system_instructions
 from edu_agent.tools.load_tools import load_tools
+from edu_agent.context import EduAgentContext
+from edu_agent.middleware.system_instructions import system_instructions
+from edu_agent.middleware.select_tools import select_tools
 
 # Загружаем ключ из .env-файла
 load_dotenv()
@@ -17,7 +18,7 @@ load_dotenv()
 class EduAgent:
     _agent: CompiledStateGraph
 
-    def __init__(self, llm_key: str, role: RoleType, template: TemplateType, debug: bool = False):
+    def __init__(self, llm_key: str, debug: bool = False):
         # Загружаем конфигурацию
         config = Config.from_yaml_file("config.yml")
         llm_config = config.llms[llm_key]
@@ -25,27 +26,25 @@ class EduAgent:
         # Создаем модель чата
         chat_model = load_chat_model(llm_config=llm_config)
 
-        # Рендерим системную инструкцию
-        instructions = render_system_instructions(role=role, template=template)
-        logger.debug(f"LLM instructions: {instructions}")
-
         # Создаем агента ReAct
         self._agent = create_agent(
             model=chat_model,
-            system_prompt=instructions,
             debug=debug,
-            tools=load_tools(role=role),
+            tools=load_tools(),
+            context_schema=EduAgentContext,
             middleware=[
                 ModelRetryMiddleware(max_retries=2, initial_delay=1),
                 ModelCallLimitMiddleware(run_limit=4, exit_behavior="end"),
+                system_instructions,
+                select_tools,
             ],
         )
 
-    def invoke(self, prompt: str) -> str:
+    def invoke(self, prompt: str, context: EduAgentContext) -> str:
         """Вызываем агента и извлекаем ответ из массива сообщений"""
         # Ограничиваем длину запроса для экономии токенов
         prompt = prompt.strip()[:4000]
         # Формируем и передаем агенту сообщение
-        response = self._agent.invoke(input={"messages": HumanMessage(prompt)})
+        response = self._agent.invoke(input={"messages": HumanMessage(prompt)}, context=context)
         # Извлекаем ответ из последнего сообщения
         return response['messages'][-1].content

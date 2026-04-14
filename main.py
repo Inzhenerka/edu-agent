@@ -1,6 +1,6 @@
-from edu_agent.agent import EduAgent
+from edu_agent.agent import EduAgent, EduAgentContext
 
-agent = EduAgent(llm_key="api", role="math_tutor", template="tutor_quick_answer", debug=False)
+agent = EduAgent(llm_key="api", debug=False)
 
 PROMPTS = [
     "Посчитай 1+2*2",
@@ -10,5 +10,8 @@ PROMPTS = [
 
 for prompt in PROMPTS:
     print(f"\n-> Запрос: {prompt}")
-    response = agent.invoke(prompt=prompt)
+    response = agent.invoke(
+        prompt=prompt,
+        context=EduAgentContext(role="math_tutor", template="tutor_quick_answer")
+    )
     print(f"Ответ: {response}")
