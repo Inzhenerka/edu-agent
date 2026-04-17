@@ -23,42 +23,17 @@
 
 ## Запуск
 
-### Запуск API сервера
-
-Для запуска сервера используйте команду:
-
-```bash
-uv run fastapi dev
-```
-
-Сервер будет доступен по адресу: http://127.0.0.1:8000
-
-Интерактивная документация API (Swagger UI): http://127.0.0.1:8000/docs
-
-Демо-страница (Веб-интерфейс): http://127.0.0.1:8000/demo
-
 ### Тестовый скрипт
 
-В проекте есть скрипт `main.py` для быстрой проверки работы (через `TestClient`):
+В проекте есть скрипт `main.py` для быстрой проверки работы:
 
 ```bash
 uv run main.py
-```
-
-## Использование (Пример запроса)
-
-Вы можете отправить POST-запрос на эндпоинт `/ask`:
-
-```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/ask' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'role=math_tutor&template=tutor_quick_answer&tone=formal&question=Что такое число Пи?'
 ```
 
 ### Параметры:
 
 - `role`: Роль ассистента (`math_tutor`, `history_tutor`).
 - `template`: Шаблон ответа (`tutor_full_answer`, `tutor_quick_answer`).
-- `tone`: Тон ответа (`friendly`, `formal`). Если не передан, по умолчанию используется `formal`.
+- `user_id`: Идентификатор студента. Если найден в `students.json`, тон будет взят из этой базы.
 - `question`: Ваш вопрос.

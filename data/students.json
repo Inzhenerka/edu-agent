@@ -1,0 +1,14 @@
+[
+  {
+    "id": "student-001",
+    "tone": "friendly"
+  },
+  {
+    "id": "student-002",
+    "tone": "formal"
+  },
+  {
+    "id": "student-003",
+    "tone": "friendly"
+  }
+]

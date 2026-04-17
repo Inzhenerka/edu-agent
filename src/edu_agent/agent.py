@@ -9,6 +9,7 @@ from edu_agent.config import Config
 from edu_agent.chat_model import load_chat_model
 from edu_agent.tools.load_tools import load_tools
 from edu_agent.context import EduAgentContext
+from edu_agent.middleware.load_student import load_student
 from edu_agent.middleware.system_instructions import system_instructions
 from edu_agent.middleware.select_tools import select_tools
 from edu_agent.middleware.filter_profanity import filter_profanity
@@ -48,6 +49,7 @@ class EduAgent:
                 ModelRetryMiddleware(max_retries=2, initial_delay=1),
                 ModelCallLimitMiddleware(run_limit=4, exit_behavior="end"),
                 filter_profanity,
+                load_student,
                 system_instructions,
                 select_tools,
             ],
