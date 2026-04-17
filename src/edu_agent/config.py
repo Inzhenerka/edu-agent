@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 type RoleType = Literal["history_tutor", "math_tutor"]
 type TemplateType = Literal["tutor_full_answer", "tutor_quick_answer"]
+type ToneType = Literal["friendly", "formal"]
 type LogLevelType = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 

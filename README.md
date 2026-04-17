@@ -19,7 +19,7 @@
    ```bash
    OPENAI_API_KEY=your_api_key_here
    ```
-2. Настройки моделей, ролей и шаблонов находятся в `config.yml`.
+2. Настройки моделей и поведения агента находятся в `config.yml`.
 
 ## Запуск
 
@@ -53,11 +53,12 @@ uv run main.py
 curl -X 'POST' \
   'http://127.0.0.1:8000/ask' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'role=math_tutor&template=tutor_quick_answer&question=Что такое число Пи?'
+  -d 'role=math_tutor&template=tutor_quick_answer&tone=formal&question=Что такое число Пи?'
 ```
 
 ### Параметры:
 
 - `role`: Роль ассистента (`math_tutor`, `history_tutor`).
 - `template`: Шаблон ответа (`tutor_full_answer`, `tutor_quick_answer`).
+- `tone`: Тон ответа (`friendly`, `formal`). Если не передан, по умолчанию используется `formal`.
 - `question`: Ваш вопрос.

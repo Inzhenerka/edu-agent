@@ -11,7 +11,11 @@ def system_instructions(request: ModelRequest[EduAgentContext]) -> str:
     context: EduAgentContext = request.runtime.context
 
     # Рендерим системную инструкцию
-    instructions = render_system_instructions(role=context.role, template=context.template)
+    instructions = render_system_instructions(
+        role=context.role,
+        template=context.template,
+        tone=context.tone,
+    )
     logger.debug(f"LLM instructions: {instructions}")
 
     return instructions
