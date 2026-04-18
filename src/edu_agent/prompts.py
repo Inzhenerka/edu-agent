@@ -72,6 +72,8 @@ def render_system_instructions(role: RoleType, template: TemplateType, tone: Ton
         case _:
             raise ValueError(f"Unknown role: {role}")
     match tone:
+        case "none":
+            tone_instruction = ""
         case "friendly":
             tone_instruction = FriendlyTonePrompt().render_prompt()
         case "formal":

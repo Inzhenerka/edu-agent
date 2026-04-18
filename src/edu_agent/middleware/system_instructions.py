@@ -19,7 +19,7 @@ def system_instructions(request: ModelRequest[EduAgentContext]) -> str:
     instructions = render_system_instructions(
         role=context.role,
         template=context.template,
-        tone=student.tone if student else "formal",
+        tone=student.tone if student else "none",
     )
     logger.debug(f"LLM instructions: {instructions}")
 
