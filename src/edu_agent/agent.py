@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from edu_agent.config import Config
 from edu_agent.chat_model import load_chat_model
 from edu_agent.tools.load_tools import load_tools
+from edu_agent.tools.historical_period import HistoricalPeriodType
 from edu_agent.context import EduAgentContext
 from edu_agent.middleware.system_instructions import system_instructions
 from edu_agent.middleware.select_tools import select_tools
@@ -21,9 +22,13 @@ load_dotenv()
 class EduAgentResponse(BaseModel):
     content: str
     formula_solved: bool
+    historical_period: HistoricalPeriodType | None
 
     def __str__(self) -> str:
-        return f"{self.content}" + (f"\n* Формула решена" if self.formula_solved else "")
+        content = self.content.strip()
+        content += f"\n* Формула решена" if self.formula_solved else ""
+        content += f"\n* Исторический период: {self.historical_period}" if self.historical_period else ""
+        return content
 
 
 class EduAgent:
@@ -62,5 +67,6 @@ class EduAgent:
         # Формируем ответ из последнего сообщения и состояния
         return EduAgentResponse(
             content=response['messages'][-1].content,
-            formula_solved=response.get('formula_solved', False)
+            formula_solved=response.get('formula_solved', False),
+            historical_period=response.get('historical_period')
         )

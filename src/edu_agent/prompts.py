@@ -48,6 +48,10 @@ class FormulaSolutionPrompt(BaseContextPrompt):
     __file_path__ = "prompts/context/formula_solution.jinja"
 
 
+class HistoricalPeriodPrompt(BaseContextPrompt):
+    __file_path__ = "prompts/context/historical_period.jinja"
+
+
 def render_system_instructions(role: RoleType, template: TemplateType) -> str:
     match role:
         case "math_tutor":
@@ -55,7 +59,7 @@ def render_system_instructions(role: RoleType, template: TemplateType) -> str:
             context_instructions: list[str] = [FormulaSolutionPrompt().render_prompt()]
         case "history_tutor":
             role_instruction = HistoryTutorPrompt().render_prompt()
-            context_instructions = []
+            context_instructions = [HistoricalPeriodPrompt().render_prompt()]
         case _:
             raise ValueError(f"Unknown role: {role}")
     match template:

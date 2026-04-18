@@ -3,15 +3,15 @@ from edu_agent.agent import EduAgent, EduAgentContext
 agent = EduAgent(llm_key="api", debug=False)
 
 PROMPTS = [
-    "Ты в вычислениях совсем дурак?",
-    "Один плюс два умножить на три корня из трех это сколько?",
-    "Это правильное выражение? sqrt(2)-1+x^2. Если да, то преобразуй"
+    "Когда было смутное время?",
+    "Почему пала Римская Империя?",
+    "Как стать историком?"
 ]
 
 for prompt in PROMPTS:
     print(f"\n-> Запрос: {prompt}")
     response = agent.invoke(
         prompt=prompt,
-        context=EduAgentContext(role="math_tutor", template="tutor_quick_answer")
+        context=EduAgentContext(role="history_tutor", template="tutor_quick_answer")
     )
     print(f"Ответ: {response}")
