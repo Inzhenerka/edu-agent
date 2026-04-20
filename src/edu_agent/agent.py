@@ -1,8 +1,10 @@
+import uuid
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langgraph.graph.state import CompiledStateGraph
-from langchain.messages import HumanMessage
-from langchain.agents.middleware import ModelRetryMiddleware, ModelCallLimitMiddleware
+from langchain.messages import HumanMessage, AnyMessage
+from langchain.agents.middleware import ModelRetryMiddleware, ModelCallLimitMiddleware, SummarizationMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import BaseModel
 
 from edu_agent.config import Config
@@ -21,6 +23,7 @@ load_dotenv()
 class EduAgentResponse(BaseModel):
     content: str
     formula_solved: bool
+    thread_id: str
 
     def __str__(self) -> str:
         return f"{self.content}" + (f"\n* Формула решена" if self.formula_solved else "")
@@ -43,6 +46,7 @@ class EduAgent:
             debug=debug,
             tools=load_tools(),
             context_schema=EduAgentContext,
+            checkpointer=InMemorySaver(),
             middleware=[
                 DetectedToolsMiddleware(),
                 ModelRetryMiddleware(max_retries=2, initial_delay=1),
@@ -50,17 +54,37 @@ class EduAgent:
                 filter_profanity,
                 system_instructions,
                 select_tools,
+                SummarizationMiddleware(
+                    model=chat_model,
+                    trigger=("tokens", 12000),
+                    keep=("messages", 16),
+                ),
             ],
         )
 
-    def invoke(self, prompt: str, context: EduAgentContext) -> EduAgentResponse:
+    def invoke(self, prompt: str, context: EduAgentContext, thread_id: str | None = None) -> EduAgentResponse:
         """Вызываем агента и извлекаем ответ из массива сообщений"""
         # Ограничиваем длину запроса для экономии токенов
         prompt = prompt.strip()[:4000]
+
+        # Используем принятый или создаем новый ID чата
+        effective_thread_id = thread_id or str(uuid.uuid4())
         # Формируем и передаем агенту сообщение
-        response = self._agent.invoke(input={"messages": HumanMessage(prompt)}, context=context)
+        response = self._agent.invoke(
+            input={"messages": HumanMessage(prompt)},
+            config={"configurable": {"thread_id": effective_thread_id}},
+            context=context
+        )
+
         # Формируем ответ из последнего сообщения и состояния
         return EduAgentResponse(
             content=response['messages'][-1].content,
-            formula_solved=response.get('formula_solved', False)
+            formula_solved=response.get('formula_solved', False),
+            thread_id=effective_thread_id,
         )
+
+    def get_messages(self, thread_id: str) -> list[AnyMessage]:
+        # Получаем снэпшот состояния
+        snapshot = self._agent.get_state(config={"configurable": {"thread_id": thread_id}})
+        # Извлекаем сохраненные сообщения
+        return snapshot.values.get("messages") or []
