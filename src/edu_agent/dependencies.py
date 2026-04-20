@@ -14,7 +14,7 @@ def init_global_dependencies(app: FastAPI):
     # Настройка глобального логгера
     logger_level = os.getenv("LOG_LEVEL", "DEBUG")
     logger.remove()
-    logger.add(sys.stderr, level=logger_level)
+    logger.add(sys.stdout, level=logger_level)
     # Создание агента
     app.state.edu_agent = EduAgent(llm_key="api", debug=False)
 
