@@ -1,12 +1,5 @@
-from loguru import logger
-import sys
-
-from edu_agent.agent import EduAgent, EduAgentContext
-
-logger.remove()
-logger.add(sys.stderr, level="INFO")
-
-agent = EduAgent(llm_key="api", debug=False)
+from fastapi.testclient import TestClient
+from edu_agent.api import app, EduAgentResponse
 
 PROMPTS = [
     "Какой сейчас век?",
@@ -14,16 +7,17 @@ PROMPTS = [
     "Перескажи наш диалог",
 ]
 
-for prompt in PROMPTS:
-    print(f"\n-> Запрос: {prompt}")
-    response = agent.invoke(
-        prompt=prompt,
-        context=EduAgentContext(role="history_tutor", template="tutor_quick_answer"),
-        thread_id='1',
-    )
-    print(f"Ответ: {response}")
-
-print("\n-> Все сообщения из состояния")
-messages = agent.get_messages(thread_id='1')
-for m in messages:
-    print(f"{m.type}: {m.content}")
+with TestClient(app) as client:
+    for prompt in PROMPTS:
+        print(f"\n-> Запрос: {prompt}")
+        response = client.post(
+            "/ask",
+            data={
+                "role": "history_tutor",
+                "template": "tutor_quick_answer",
+                "question": prompt,
+                "thread_id": "1",
+            },
+        )
+        agent_response = EduAgentResponse.model_validate(response.json())
+        print(f"Ответ: {agent_response.content}")

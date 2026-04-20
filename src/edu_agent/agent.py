@@ -1,5 +1,4 @@
 import uuid
-from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langgraph.graph.state import CompiledStateGraph
 from langchain.messages import HumanMessage, AnyMessage
@@ -15,9 +14,6 @@ from edu_agent.middleware.system_instructions import system_instructions
 from edu_agent.middleware.select_tools import select_tools
 from edu_agent.middleware.filter_profanity import filter_profanity
 from edu_agent.middleware.detect_tools import DetectedToolsMiddleware
-
-# Загружаем ключ из .env-файла
-load_dotenv()
 
 
 class EduAgentResponse(BaseModel):

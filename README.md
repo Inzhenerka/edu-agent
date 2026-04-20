@@ -1,6 +1,6 @@
-# Образовательный AI-ассистент
+# Образовательный AI-агент
 
-Простой помощник для студентов на базе LLM и FastAPI.
+Чат-бот для студентов на базе LLM и FastAPI.
 
 ## Установка
 
@@ -23,41 +23,60 @@
 
 ## Запуск
 
-### Запуск API сервера
-
 Для запуска сервера используйте команду:
 
 ```bash
 uv run fastapi dev
 ```
 
-Сервер будет доступен по адресу: http://127.0.0.1:8000
+После запуска доступны:
 
-Интерактивная документация API (Swagger UI): http://127.0.0.1:8000/docs
+- API: `http://127.0.0.1:8000`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- Demo UI: `http://127.0.0.1:8000/demo`
 
-Демо-страница (Веб-интерфейс): http://127.0.0.1:8000/demo
-
-### Тестовый скрипт
-
-В проекте есть скрипт `main.py` для быстрой проверки работы (через `TestClient`):
+Для быстрой локальной проверки через `TestClient`:
 
 ```bash
-uv run main.py
+uv run python main.py
 ```
 
-## Использование (Пример запроса)
+## API
 
-Вы можете отправить POST-запрос на эндпоинт `/ask`:
+### `POST /ask`
+
+Эндпоинт принимает `application/x-www-form-urlencoded` и возвращает JSON.
+
+Поля формы:
+
+- `role`: `math_tutor` или `history_tutor`
+- `template`: `tutor_quick_answer` или `tutor_full_answer`
+- `question`: вопрос пользователя
+- `thread_id`: опциональный ID диалога; если передавать один и тот же, агент продолжит разговор
+
+Пример запроса:
 
 ```bash
-curl -X 'POST' \
-  'http://127.0.0.1:8000/ask' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'role=math_tutor&template=tutor_quick_answer&question=Что такое число Пи?'
+curl -X POST "http://127.0.0.1:8000/ask" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "role=math_tutor" \
+  -d "template=tutor_quick_answer" \
+  -d "question=Что такое число Пи?" \
+  -d "thread_id=lesson-1"
 ```
 
-### Параметры:
+Пример ответа:
 
-- `role`: Роль ассистента (`math_tutor`, `history_tutor`).
-- `template`: Шаблон ответа (`tutor_full_answer`, `tutor_quick_answer`).
-- `question`: Ваш вопрос.
+```json
+{
+  "content": "Ответ агента",
+  "formula_solved": false,
+  "thread_id": "lesson-1"
+}
+```
+
+`formula_solved` показывает, использовал ли агент инструмент решения формулы.
+
+### `GET /demo`
+
+Возвращает простую HTML-страницу для ручного тестирования чата.

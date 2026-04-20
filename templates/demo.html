@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат с ИИ-тьютором</title>
+    <style>
+        :root {
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            --page-bg: #eef3f9;
+            --panel-bg: #ffffff;
+            --panel-border: #d4deea;
+            --text-main: #17324f;
+            --text-muted: #5e7590;
+            --accent: #2457a6;
+            --accent-hover: #1c4685;
+            --accent-soft: #e8f0fb;
+            --user-bg: #f4f8fe;
+            --error-bg: #fff4f4;
+            --error-border: #e9c8c8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            min-height: 100svh;
+            height: 100dvh;
+            background: var(--page-bg);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        main {
+            max-width: 920px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .page-header {
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 28px;
+            color: var(--accent);
+        }
+
+        .page-header p {
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .chat-form {
+            display: grid;
+            gap: 10px;
+            height: 100%;
+            min-height: 0;
+            grid-template-rows: minmax(0, 1fr);
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        select,
+        textarea,
+        button {
+            font: inherit;
+        }
+
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #fff;
+            color: var(--text-main);
+        }
+
+        select:focus,
+        textarea:focus {
+            outline: 2px solid rgba(36, 87, 166, 0.14);
+            border-color: var(--accent);
+        }
+
+        .chat-card {
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            background: var(--panel-bg);
+            display: grid;
+            gap: 12px;
+            padding: 12px 14px;
+            height: 100%;
+            min-height: 0;
+            grid-template-rows: minmax(0, 1fr) auto;
+        }
+
+        .messages {
+            display: grid;
+            gap: 10px;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 4px;
+            align-content: start;
+        }
+
+        .empty-state {
+            display: grid;
+            place-items: center;
+            min-height: 180px;
+            padding: 18px;
+            border: 1px dashed var(--panel-border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .message {
+            display: grid;
+            gap: 6px;
+            width: fit-content;
+            max-width: 86%;
+            align-content: start;
+        }
+
+        .message.user {
+            justify-self: end;
+        }
+
+        .message.assistant,
+        .message.system {
+            justify-self: start;
+        }
+
+        .message-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .message-bubble {
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            line-height: 1.55;
+            background: var(--panel-bg);
+            word-break: break-word;
+            width: fit-content;
+            max-width: 100%;
+        }
+
+        .message.user .message-bubble {
+            background: var(--user-bg);
+            border-color: #c7d7ef;
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--accent-soft);
+            border-color: #c8d8f0;
+        }
+
+        .message.pending .message-bubble {
+            color: var(--text-muted);
+            background: #f4f8fd;
+            border-color: #d5e0ef;
+        }
+
+        .message.system .message-bubble {
+            background: var(--error-bg);
+            border-color: var(--error-border);
+            color: #9c2f2f;
+        }
+
+        .message-bubble pre {
+            margin: 0 0 12px;
+            overflow-x: auto;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .message-bubble code {
+            padding: 1px 4px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.76);
+            font-family: Consolas, monospace;
+        }
+
+        .message-bubble pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .message-bubble h1,
+        .message-bubble h2,
+        .message-bubble h3 {
+            margin: 14px 0 8px;
+            color: var(--accent);
+            line-height: 1.25;
+        }
+
+        .message-bubble h1:first-child,
+        .message-bubble h2:first-child,
+        .message-bubble h3:first-child {
+            margin-top: 0;
+        }
+
+        .message-bubble h1 {
+            font-size: 20px;
+        }
+
+        .message-bubble h2 {
+            font-size: 18px;
+        }
+
+        .message-bubble h3 {
+            font-size: 16px;
+        }
+
+        .message-note {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .composer {
+            display: grid;
+            gap: 10px;
+        }
+
+        textarea[name="question"] {
+            min-height: 84px;
+            resize: vertical;
+        }
+
+        .composer-actions {
+            display: grid;
+            gap: 10px;
+        }
+
+        .composer-controls {
+            display: grid;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .control-field {
+            gap: 0;
+        }
+
+        .composer-submit {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .composer-controls .button-row {
+            justify-content: flex-start;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .button-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .button-secondary {
+            background: #edf3fb;
+            color: var(--accent);
+            border: 1px solid #ccd9ea;
+        }
+
+        .button-secondary:hover {
+            background: #e4edf9;
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        @media (min-width: 720px) {
+            .composer-actions {
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: end;
+            }
+
+            .composer-controls {
+                grid-template-columns: repeat(2, minmax(180px, 220px)) auto;
+            }
+        }
+
+        @media (max-width: 719px) {
+            body {
+                padding: 12px;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+
+            .composer-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .composer-submit {
+                display: block;
+            }
+
+            .button-row {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .button-row button {
+                flex: 1 1 auto;
+            }
+
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="page-header">
+        <div>
+            <h1>Чат с ИИ-тьютором</h1>
+            <p>Диалог сохраняется между сообщениями и продолжается, пока вы не начнёте новый чат.</p>
+        </div>
+    </section>
+
+    <form id="demo-form" class="chat-form">
+        <input id="thread-id" type="hidden" name="thread_id" value="">
+
+        <section class="chat-card">
+            <div id="messages" class="messages" aria-live="polite"></div>
+
+            <div class="composer">
+                <label>
+                    Сообщение
+                    <textarea
+                            id="question"
+                            name="question"
+                            rows="3"
+                            title="Сообщение. Ctrl+Enter отправляет"
+                            placeholder="Например: объясни теорему Пифагора простыми словами"
+                            required
+                    ></textarea>
+                </label>
+
+                <div class="composer-actions">
+                    <div class="composer-controls">
+                        <label class="control-field">
+                            <select name="role" aria-label="Роль" title="Роль">
+                                <option value="math_tutor">Тьютор по математике</option>
+                                <option value="history_tutor">Тьютор по истории</option>
+                            </select>
+                        </label>
+
+                        <label class="control-field">
+                            <select name="template" aria-label="Стиль ответа" title="Стиль ответа">
+                                <option value="tutor_quick_answer" selected>Краткий ответ</option>
+                                <option value="tutor_full_answer">Развернутый ответ</option>
+                            </select>
+                        </label>
+
+                        <div class="button-row">
+                            <button id="new-chat-btn" class="button-secondary" type="button">Новый чат</button>
+                        </div>
+                    </div>
+
+                    <div class="composer-submit">
+                        <div class="button-row">
+                            <button id="submit-btn" class="button-primary" type="submit" title="Ctrl+Enter">Отправить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </form>
+</main>
+
+<script>
+    const form = document.getElementById("demo-form");
+    const messagesNode = document.getElementById("messages");
+    const questionField = document.getElementById("question");
+    const submitButton = document.getElementById("submit-btn");
+    const newChatButton = document.getElementById("new-chat-btn");
+    const threadField = document.getElementById("thread-id");
+
+    const state = {
+        threadId: "",
+        isSubmitting: false,
+        messages: [],
+    };
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;");
+    }
+
+    function renderMarkdown(source) {
+        const codeBlocks = [];
+        const withPlaceholders = escapeHtml(source).replace(/```([\s\S]*?)```/g, (_, code) => {
+            const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+            codeBlocks.push(`<pre><code>${code.trim()}</code></pre>`);
+            return placeholder;
+        });
+
+        return withPlaceholders
+            .replace(/^### (.*$)\n?/gm, "<h3>$1</h3>")
+            .replace(/^## (.*$)\n?/gm, "<h2>$1</h2>")
+            .replace(/^# (.*$)\n?/gm, "<h1>$1</h1>")
+            .replace(/`([^`]+)`/g, "<code>$1</code>")
+            .replace(/\n/g, "<br>")
+            .replace(/__CODE_BLOCK_(\d+)__/g, (_, index) => codeBlocks[Number(index)]);
+    }
+
+    function renderPlainText(source) {
+        return escapeHtml(source).replace(/\n/g, "<br>");
+    }
+
+    function formatTime(isoString) {
+        return new Date(isoString).toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
+
+    function setThreadId(value) {
+        state.threadId = value;
+        threadField.value = value;
+    }
+
+    function getRoleLabel(role) {
+        if (role === "user") {
+            return "Вы";
+        }
+        if (role === "assistant") {
+            return "Тьютор";
+        }
+        return "Система";
+    }
+
+    function renderMessages() {
+        if (state.messages.length === 0) {
+            messagesNode.innerHTML = `
+                    <div class="empty-state">
+                        История сообщений появится здесь.<br>
+                        Нажмите «Отправить», чтобы начать диалог.
+                    </div>
+                `;
+            return;
+        }
+
+        messagesNode.innerHTML = state.messages.map((message) => {
+            const meta = [getRoleLabel(message.role), formatTime(message.createdAt)];
+            if (!message.pending && message.formulaSolved) {
+                meta.push("Формула решена");
+            }
+            if (!message.pending && message.durationMs) {
+                meta.push(`${(message.durationMs / 1000).toFixed(2)} с`);
+            }
+
+            const body = message.role === "assistant" && !message.pending
+                ? renderMarkdown(message.content)
+                : renderPlainText(message.content);
+            const note = !message.pending && message.warning
+                ? `<div class="message-note">${escapeHtml(message.warning)}</div>`
+                : "";
+
+            return `
+                    <article class="message ${message.role}${message.pending ? " pending" : ""}">
+                        <div class="message-meta">${meta.map(escapeHtml).join(" · ")}</div>
+                        <div class="message-bubble">${body}</div>
+                        ${note}
+                    </article>
+                `;
+        }).join("");
+
+        messagesNode.scrollTop = messagesNode.scrollHeight;
+    }
+
+    function addMessage(role, content, options = {}) {
+        state.messages.push({
+            role,
+            content,
+            createdAt: new Date().toISOString(),
+            formulaSolved: Boolean(options.formulaSolved),
+            durationMs: options.durationMs || 0,
+            pending: Boolean(options.pending),
+            warning: options.warning || "",
+        });
+        renderMessages();
+        return state.messages.length - 1;
+    }
+
+    function updateMessage(index, patch) {
+        if (index < 0 || index >= state.messages.length) {
+            return;
+        }
+
+        state.messages[index] = {
+            ...state.messages[index],
+            ...patch,
+        };
+        renderMessages();
+    }
+
+    function shouldShowMathAccuracyWarning(role, question, formulaSolved) {
+        return role === "math_tutor" && /\d/.test(question) && !formulaSolved;
+    }
+
+    function normalizeResponse(payload) {
+        if (!payload || typeof payload !== "object") {
+            throw new Error("Сервис вернул пустой ответ.");
+        }
+
+        if (typeof payload.content !== "string") {
+            throw new Error("Ответ сервиса не содержит поле content.");
+        }
+
+        return {
+            content: payload.content,
+            formulaSolved: Boolean(payload.formula_solved),
+            threadId: typeof payload.thread_id === "string" ? payload.thread_id : "",
+        };
+    }
+
+    function formatErrorDetail(item) {
+        if (!item || typeof item !== "object") {
+            return "";
+        }
+
+        const location = Array.isArray(item.loc) ? item.loc.join(".") : "";
+        const message = typeof item.msg === "string" ? item.msg : JSON.stringify(item);
+        return location ? `${location}: ${message}` : message;
+    }
+
+    function getErrorMessage(payload, fallback) {
+        if (!payload || typeof payload !== "object") {
+            return fallback;
+        }
+
+        if (typeof payload.detail === "string") {
+            return payload.detail;
+        }
+
+        if (Array.isArray(payload.detail)) {
+            return payload.detail.map(formatErrorDetail).filter(Boolean).join("\n") || fallback;
+        }
+
+        return typeof payload.error === "string" ? payload.error : fallback;
+    }
+
+    function resetChat() {
+        setThreadId("");
+        state.messages = [];
+        renderMessages();
+        questionField.value = "";
+        questionField.focus();
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const question = questionField.value.trim();
+        if (!question || state.isSubmitting) {
+            return;
+        }
+        const selectedRole = form.elements.role.value;
+
+        state.isSubmitting = true;
+        submitButton.disabled = true;
+        newChatButton.disabled = true;
+
+        addMessage("user", question);
+        const pendingMessageIndex = addMessage("assistant", "Тьютор готовит ответ...", {
+            pending: true,
+        });
+
+        const requestData = new FormData(form);
+        requestData.set("question", question);
+        requestData.set("thread_id", state.threadId);
+
+        const startedAt = performance.now();
+
+        try {
+            const response = await fetch("/ask", {
+                method: "POST",
+                body: requestData,
+            });
+            const payload = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                throw new Error(getErrorMessage(payload, "Запрос завершился ошибкой."));
+            }
+
+            const result = normalizeResponse(payload);
+            setThreadId(result.threadId);
+            const warning = shouldShowMathAccuracyWarning(selectedRole, question, result.formulaSolved)
+                ? "Языковая модель может быть неточна в расчётах. Проверьте итог вручную."
+                : "";
+            updateMessage(pendingMessageIndex, {
+                role: "assistant",
+                content: result.content,
+                createdAt: new Date().toISOString(),
+                formulaSolved: result.formulaSolved,
+                durationMs: performance.now() - startedAt,
+                pending: false,
+                warning,
+            });
+            questionField.value = "";
+            questionField.focus();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            updateMessage(pendingMessageIndex, {
+                role: "system",
+                content: message,
+                createdAt: new Date().toISOString(),
+                formulaSolved: false,
+                durationMs: 0,
+                pending: false,
+                warning: "",
+            });
+        } finally {
+            state.isSubmitting = false;
+            submitButton.disabled = false;
+            newChatButton.disabled = false;
+        }
+    });
+
+    newChatButton.addEventListener("click", () => {
+        if (state.isSubmitting) {
+            return;
+        }
+        resetChat();
+    });
+
+    questionField.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+
+    setThreadId("");
+    renderMessages();
+</script>
+</body>
+</html>
